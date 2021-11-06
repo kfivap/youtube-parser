@@ -142,8 +142,17 @@ function dropAfterFirstQuery(path) {
 
 function parseChannelSubscribersFromVideo(rawData) {
     try {
-        const subscribersRaw = JSON.parse('{' + rawData + '}}')
-        return subscribersRaw.subscriberCountText.accessibility.accessibilityData.label
+        let subscribersRaw = JSON.parse('{' + rawData + '}}')
+        subscribersRaw = subscribersRaw.subscriberCountText.accessibility.accessibilityData.label
+        let subscribersDigit = subscribersRaw.replace(/[^0-9,]+/gm, '').replace(',', '.')
+        if(subscribersRaw.includes('миллион')){
+            return subscribersDigit*1000000
+        } else if (subscribersRaw.includes('миллион')){
+            return subscribersDigit*1000
+        } else {
+            return subscribersDigit
+        }
+        // /[^0-9,]+/gm
     } catch (e) {
         console.log(e, rawData)
         return 'NO DATA'
@@ -176,8 +185,8 @@ function parseChannelNameFromVideo(rawData) {
 function parseVideoViewsFromVideo(rawData) {
     try {
         const videoViewsRaw = findInDocument(rawData, '{"viewCount":{"simpleText":"', '"},"shortViewCount"')[0]
-        videoViews = videoViewsRaw.replace('{"viewCount":{"simpleText":"', '').replace('"},"shortViewCount"', '')
-        return videoViews
+        const videoViews = videoViewsRaw.replace('{"viewCount":{"simpleText":"', '').replace('"},"shortViewCount"', '').replace(/[^0-9,]+/gm, '').replace(',', '.')
+        return Number(videoViews)
     } catch (e) {
         console.log(e, rawData)
         return 'NO DATA'
@@ -236,10 +245,8 @@ async function goToVideo(videoUri, depth) {
     const result = await fetchPage(videoUri)
     // console.log(videoUri)
     const { urlArray, videoName, channelSubscribers, channelLink, channelName, videoViews } = parseVideos(result, true)
-
-    // console.log({ videoName, videoViews, channelSubscribers, channelLink, channelName, })
+    console.log(videoName, videoViews, channelName)
     await saveVideoAndChannel({ videoName, channelSubscribers, channelLink, channelName, videoUri, videoViews })
-    // await db.collection('parsedVideos').insertOne({ videoUri, videoName: [...videoName][0], depth })
     for (let i = 0; i < urlArray.length; i++) {
         if (depth < 2) {
             // console.log(urlArray.length)
@@ -248,8 +255,8 @@ async function goToVideo(videoUri, depth) {
     }
 }
 
-async function saveVideoAndChannel({ videoName, channelSubscribers, channelLink, channelName, videoUri }) {
-    // let channel = await db.collection('parsedChannels').findOne({channelLink}, {$set:{channelSubscribers, channelLink, channelName}}, {upsert: true})
+async function saveVideoAndChannel({ videoName, channelSubscribers, channelLink, channelName, videoUri, videoViews }) {
+
     let channel = await db.collection('parsedChannels').findOne({ channelLink })
     if (!channel) {
         channel = await db.collection('parsedChannels').insertOne({ channelSubscribers, channelLink, channelName })
