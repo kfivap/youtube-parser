@@ -147,7 +147,7 @@ function parseChannelSubscribersFromVideo(rawData) {
         let subscribersDigit = subscribersRaw.replace(/[^0-9,]+/gm, '').replace(',', '.')
         if(subscribersRaw.includes('миллион')){
             return subscribersDigit*1000000
-        } else if (subscribersRaw.includes('миллион')){
+        } else if (subscribersRaw.includes('тыс')){
             return subscribersDigit*1000
         } else {
             return subscribersDigit
@@ -233,13 +233,15 @@ function parseVideos(document, fromVideo) {
 }
 
 async function goToVideo(videoUri, depth) {
-    console.log(statisctics)
+    
     const exist = await db.collection('parsedVideos').findOne({ videoUri })
     if (exist) {
         statisctics.videosExist++
-        // console.log('exist', videoUri, depth, counter++, exist.videoName)
+
+        console.log('exist', exist.videoName)
         return
     }
+    console.log(statisctics)
     statisctics[`videosInDepth_${depth}`]++
     // console.log(statisctics)
     const result = await fetchPage(videoUri)
