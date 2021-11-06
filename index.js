@@ -30,6 +30,8 @@ const BASE_URL = 'https://www.youtube.com'
 const statisctics = {
     trendChannel: 0,
     videosFromTrendChannel: 0,
+    savedChannels: 0,
+    alreadyVisitedChannels: 0,
     videosInDepth_1: 0,
     videosInDepth_2: 0,
     // videosInDepth_3: 0,
@@ -214,8 +216,7 @@ function parseVideos(document, fromVideo) {
     }
     return { urlArray, videoName, channelSubscribers, channelLink, channelName, videoViews }
 }
-const videoObj = {}
-let counter = 0
+
 async function goToVideo(videoUri, depth) {
     console.log(statisctics)
     const exist = await db.collection('parsedVideos').findOne({ videoUri })
@@ -246,6 +247,9 @@ async function saveVideoAndChannel({ videoName, channelSubscribers, channelLink,
     let channel = await db.collection('parsedChannels').findOne({ channelLink })
     if (!channel) {
         channel = await db.collection('parsedChannels').insertOne({ channelSubscribers, channelLink, channelName })
+        statisctics.savedChannels++
+    } else{
+        statisctics.alreadyVisitedChannels++
     }
     // console.log(channel)
     await db.collection('parsedVideos').insertOne({ videoName, videoViews, videoUri, channelId: channel._id || channel.insertedId })
