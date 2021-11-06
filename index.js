@@ -117,8 +117,14 @@ function getTrendingChannels(workingDoc) {
 }
 
 function parseChannelSubscribersFromChannel(document) {
-    const rawSubscribers = findInDocument(document, '{', 'подписчиков"}', true)
-    return JSON.parse(rawSubscribers).label
+    try{
+        const rawSubscribers = findInDocument(document, '{', 'подписчиков"}', true)
+        return JSON.parse(rawSubscribers).label
+    } catch(e){
+        console.log(e, document)
+        return 'NO DATA'
+    }
+
 }
 
 
